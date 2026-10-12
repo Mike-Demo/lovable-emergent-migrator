@@ -1,0 +1,9 @@
+{
+  "name": "mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP server: analyze a Lovable-exported repo and generate an Emergent migration pack",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1"
+  }
+}

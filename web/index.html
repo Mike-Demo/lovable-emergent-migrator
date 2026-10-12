@@ -4,7 +4,94 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lovable → Emergent Migrator</title>
-<meta name="description" content="Analyze a Lovable-exported GitHub repo and generate everything you need to import it into Emergent.">
+<meta name="description" content="Analyze a Lovable-exported GitHub repo and generate everything you need to import it into Emergent: a repo inventory, a paste-ready EMERGENT.md import prompt, a .env.example, and a migration checklist. Free, client-side, no signup.">
+<link rel="canonical" href="https://lovable-emergent-migrator.space.fast/">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Mike Demopoulos">
+<meta name="theme-color" content="#0a0c11">
+<meta name="google-site-verification" content="p9zSWKrHQjlFQB5FvkHLeSWcdxya53S3UpOum9iMsMQ">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Lovable → Emergent Migrator">
+<meta property="og:title" content="Lovable → Emergent Migrator — ship your Lovable app into Emergent in minutes">
+<meta property="og:description" content="Paste the GitHub repo Lovable synced your project to. Get a full inventory, a paste-ready import prompt for Emergent's agent, and a migration checklist.">
+<meta property="og:url" content="https://lovable-emergent-migrator.space.fast/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@Mike_Demo">
+<meta name="twitter:title" content="Lovable → Emergent Migrator">
+<meta name="twitter:description" content="Analyze a Lovable-synced GitHub repo and generate everything you need to import it into Emergent. Free, client-side, no signup.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://lovable-emergent-migrator.space.fast/#app",
+      "name": "Lovable → Emergent Migrator",
+      "url": "https://lovable-emergent-migrator.space.fast/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "description": "Analyzes a Lovable-exported GitHub repo and generates a migration pack for Emergent: repo inventory, paste-ready EMERGENT.md import prompt, .env.example, and acceptance checklist. Also ships as a CLI script, MCP server, and agent skill.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": { "@id": "https://lovable-emergent-migrator.space.fast/#author" },
+      "isPartOf": { "@id": "https://lovable-emergent-migrator.space.fast/#website" }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://lovable-emergent-migrator.space.fast/#website",
+      "name": "Lovable → Emergent Migrator",
+      "url": "https://lovable-emergent-migrator.space.fast/"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://lovable-emergent-migrator.space.fast/#author",
+      "name": "Mike Demopoulos",
+      "url": "https://github.com/Mike-Demo",
+      "sameAs": [
+        "https://github.com/Mike-Demo",
+        "https://x.com/Mike_Demo",
+        "https://facebook.com/mikedemo42",
+        "https://bsky.app/profile/mikedemo.bsky.social"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://lovable-emergent-migrator.space.fast/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What does the Lovable → Emergent Migrator do?",
+          "acceptedAnswer": { "@type": "Answer", "text": "You paste the URL of the GitHub repo that Lovable synced your project to. The analyzer inventories it — framework, dependencies, Supabase migrations and edge functions, referenced env vars, secret patterns — then generates a migration pack: a paste-ready EMERGENT.md prompt for Emergent's agent, a .env.example, and an acceptance checklist." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does my repo data leave my browser?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Analysis runs 100% client-side. The only network calls go to api.github.com to read the repo's public file tree. Your repo URL and any GitHub token you enter are never stored or sent anywhere else." }
+        },
+        {
+          "@type": "Question",
+          "name": "What do I paste into Emergent?",
+          "acceptedAnswer": { "@type": "Answer", "text": "After pulling your repo into a new Emergent task (profile icon → Connect GitHub → Pull from GitHub), paste the generated EMERGENT.md prompt as your first message to Emergent's agent. It tells the agent to adapt your codebase rather than rebuild it, and how to re-wire the backend." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does my Supabase data migrate too?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Schema and code travel; data does not. Lovable's Git export includes supabase/migrations (your schema and RLS policies) and supabase/functions (your edge functions), but zero database rows, no Storage bucket files, and no secrets. The generated prompt tells Emergent's agent to point at your existing Supabase project or a fresh one with migrations applied." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use it with a private repo?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Add a GitHub personal access token with repo scope in the optional token field, or download the CLI script (migrate-to-emergent.sh), which clones the repo locally and produces the same EMERGENT.md pack on your own machine." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a CLI, MCP server, or agent skill?",
+          "acceptedAnswer": { "@type": "Answer", "text": "All three. The CLI script (migrate-to-emergent.sh) runs the full prep locally. The MCP server exposes analyze_repo and generate_migration_pack tools over stdio for Claude Code and other agents. The agent skill installs via 'npx skills add mike-demo/lovable-emergent-migrator' from skills.sh. All are open source at github.com/Mike-Demo/lovable-emergent-migrator." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <style>
 :root{
   --bg:#0a0c11; --bg2:#0e1118; --card:#12161f; --card2:#161b26; --line:#232a3a;
@@ -201,10 +288,38 @@ footer a{color:var(--acc2);text-decoration:none}
 </div>
 <p class="hint" style="margin-top:14px">Backend call: Emergent's native stack is FastAPI + MongoDB, but your Lovable app speaks Supabase. The generated prompt keeps Supabase as the backend — the lowest-risk path — and tells Emergent's agent exactly how to re-wire it.</p>
 
+<h2 class="sec-title" id="faq">Frequently asked questions</h2>
+<div class="card" style="padding:6px 26px">
+<details><summary><b>What does the Lovable → Emergent Migrator do?</b></summary>
+<p style="font-size:14px;color:var(--mut)">You paste the URL of the GitHub repo that Lovable synced your project to. The analyzer inventories it — framework, dependencies, Supabase migrations and edge functions, referenced env vars, secret patterns — then generates a migration pack: a paste-ready <code>EMERGENT.md</code> prompt for Emergent's agent, a <code>.env.example</code>, and an acceptance checklist.</p></details>
+<details><summary><b>Does my repo data leave my browser?</b></summary>
+<p style="font-size:14px;color:var(--mut)">No. Analysis runs 100% client-side. The only network calls go to <code>api.github.com</code> to read the repo's public file tree. Your repo URL and any GitHub token you enter are never stored or sent anywhere else.</p></details>
+<details><summary><b>What do I paste into Emergent?</b></summary>
+<p style="font-size:14px;color:var(--mut)">After pulling your repo into a new Emergent task (profile icon → Connect GitHub → Pull from GitHub), paste the generated <code>EMERGENT.md</code> prompt as your first message to Emergent's agent. It tells the agent to adapt your codebase rather than rebuild it, and how to re-wire the backend.</p></details>
+<details><summary><b>Does my Supabase data migrate too?</b></summary>
+<p style="font-size:14px;color:var(--mut)">Schema and code travel; data does not. Lovable's Git export includes <code>supabase/migrations</code> (your schema and RLS policies) and <code>supabase/functions</code> (your edge functions), but zero database rows, no Storage bucket files, and no secrets. The generated prompt tells Emergent's agent to point at your existing Supabase project or a fresh one with migrations applied.</p></details>
+<details><summary><b>Can I use it with a private repo?</b></summary>
+<p style="font-size:14px;color:var(--mut)">Yes. Add a GitHub personal access token with <code>repo</code> scope in the optional token field, or download the CLI script (<code>migrate-to-emergent.sh</code>), which clones the repo locally and produces the same <code>EMERGENT.md</code> pack on your own machine.</p></details>
+<details><summary><b>Is there a CLI, MCP server, or agent skill?</b></summary>
+<p style="font-size:14px;color:var(--mut)">All three. The CLI script runs the full prep locally. The MCP server exposes <code>analyze_repo</code> and <code>generate_migration_pack</code> tools over stdio for Claude Code and other agents. The agent skill installs via <code>npx skills add mike-demo/lovable-emergent-migrator</code> from skills.sh. All are open source in the <a class="link" href="https://github.com/Mike-Demo/lovable-emergent-migrator" target="_blank" rel="noopener">GitHub repo</a>.</p></details>
+</div>
+
 </main>
 <footer>
-  Built for the Lovable → Emergent migration path · Analysis runs 100% client-side ·
-  <a href="#" onclick="downloadCLI();return false;">CLI script</a> for private repos
+  <div style="margin-bottom:10px">
+    <a href="docs.html">Docs</a> · <a href="#faq">FAQ</a> · <a href="llms.txt">llms.txt</a> ·
+    <a href="https://github.com/Mike-Demo/lovable-emergent-migrator" target="_blank" rel="noopener">GitHub repo</a> ·
+    <a href="https://www.skills.sh/mike-demo/lovable-emergent-migrator" target="_blank" rel="noopener">Skill on skills.sh</a>
+  </div>
+  <div style="margin-bottom:10px">
+    <a href="https://github.com/Mike-Demo" target="_blank" rel="noopener">GitHub</a> ·
+    <a href="https://x.com/Mike_Demo" target="_blank" rel="noopener">X</a> ·
+    <a href="https://facebook.com/mikedemo42" target="_blank" rel="noopener">Facebook</a> ·
+    <a href="https://bsky.app/profile/mikedemo.bsky.social" target="_blank" rel="noopener">Bluesky</a>
+  </div>
+  <div>Built by <a href="https://github.com/Mike-Demo" target="_blank" rel="noopener">Mike Demopoulos</a> ·
+  vanilla JavaScript, no frameworks · repo data via the <a href="https://docs.github.com/en/rest" target="_blank" rel="noopener">GitHub REST API</a> ·
+  analysis runs 100% client-side</div>
 </footer>
 </div>
 <div class="toast" id="toast"></div>

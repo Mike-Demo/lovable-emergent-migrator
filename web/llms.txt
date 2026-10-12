@@ -1,0 +1,53 @@
+# Lovable → Emergent Migrator
+
+> Analyze a Lovable-synced GitHub repo and generate everything needed to import it into Emergent.
+
+Site: https://lovable-emergent-migrator.space.fast/
+Docs: https://lovable-emergent-migrator.space.fast/docs.html
+FAQ: https://lovable-emergent-migrator.space.fast/#faq
+Source: https://github.com/Mike-Demo/lovable-emergent-migrator (MIT)
+Skill: npx skills add mike-demo/lovable-emergent-migrator
+
+## What it does
+
+1. User pastes the URL of the GitHub repo Lovable created via Settings → Git → Connect GitHub.
+2. The analyzer (100% client-side, only calls api.github.com) inventories the repo:
+   framework and key dependencies from package.json, supabase/ migrations and edge
+   functions, env var names referenced in code, secret patterns, tracked .env files,
+   .lovable/ builder artifacts.
+3. It generates a migration pack: a paste-ready EMERGENT.md prompt for Emergent's
+   agent, a .env.example (names only), and an acceptance checklist saved in
+   localStorage per repo.
+
+## Import path into Emergent (UI only — Emergent has no import API)
+
+Profile icon → Connect GitHub → new task → GitHub button in chat → Pull from GitHub
+→ pick repo + branch → paste the EMERGENT.md prompt as the first agent message.
+
+## Backend decision
+
+Emergent's native stack is FastAPI + MongoDB; Lovable apps are Vite + React +
+Supabase. The default path keeps Supabase as the backend (lowest risk). If no
+supabase/ directory is found, the prompt tells the agent to identify the real
+backend and ask for its URL/keys rather than invent one.
+
+## What travels / what doesn't
+
+Travels: React source, package.json, supabase/migrations (schema + RLS),
+supabase/functions (edge functions), public assets, git history.
+Stays behind: database rows (zero data in exports), Storage bucket files,
+secrets (re-enter in Emergent), Lovable hosting/preview URLs/analytics.
+
+## Other interfaces
+
+- CLI: migrate-to-emergent.sh --repo <git-url> [--branch emergent-import] [--push]
+  Clones locally, same inventory, commits an emergent-import branch.
+- MCP server (stdio, @modelcontextprotocol/sdk): tools analyze_repo and
+  generate_migration_pack. Per-call github_token or GITHUB_TOKEN env.
+- Agent skill: skills/lovable-emergent-migrator/ in the repo; install via
+  npx skills add mike-demo/lovable-emergent-migrator.
+
+## Privacy
+
+Web analysis is client-side only. GitHub tokens are kept in page memory, never
+stored or sent anywhere except api.github.com.

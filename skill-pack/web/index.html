@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lovable → Emergent Migrator</title>
+<meta name="description" content="Analyze a Lovable-exported GitHub repo and generate everything you need to import it into Emergent.">
+<style>
+:root{
+  --bg:#0a0c11; --bg2:#0e1118; --card:#12161f; --card2:#161b26; --line:#232a3a;
+  --txt:#e8ecf4; --mut:#9aa3b5; --dim:#6b7488;
+  --acc1:#8b5cf6; --acc2:#22d3ee; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#151b2e 0%,var(--bg) 60%) fixed,var(--bg);
+  color:var(--txt);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header{padding:56px 0 8px;text-align:center}
+.badge{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);
+  border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:18px;background:rgba(255,255,255,.02)}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.12;margin:0 0 12px;font-weight:800;letter-spacing:-.02em}
+h1 .grad{background:linear-gradient(90deg,var(--acc1),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);max-width:620px;margin:0 auto 34px;font-size:17px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;
+  padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+label{font-size:13px;color:var(--mut);display:block;margin:0 0 8px;font-weight:600}
+input[type=text],input[type=password]{width:100%;background:#0b0e15;border:1px solid var(--line);border-radius:10px;
+  color:var(--txt);padding:13px 15px;font-size:15px;font-family:var(--mono);outline:none}
+input:focus{border-color:var(--acc1);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.row{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+button{cursor:pointer;border:0;border-radius:10px;font-weight:700;font-size:15px;padding:13px 22px;
+  background:linear-gradient(90deg,var(--acc1),#6d5ef0);color:#fff;transition:transform .12s,box-shadow .12s}
+button:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(139,92,246,.35)}
+button:disabled{opacity:.5;cursor:wait;transform:none;box-shadow:none}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);box-shadow:none}
+button.ghost:hover{border-color:var(--acc1);box-shadow:none}
+button.small{padding:8px 14px;font-size:13px}
+.hint{font-size:13px;color:var(--dim);margin-top:10px}
+.hint a,.link{color:var(--acc2);text-decoration:none}
+.hint a:hover{text-decoration:underline}
+details{margin-top:12px;font-size:13px;color:var(--mut)}
+details summary{cursor:pointer;color:var(--dim)}
+.steps{display:flex;gap:0;margin:26px 0 6px}
+.step{flex:1;text-align:center;font-size:12px;color:var(--dim);position:relative;padding-top:26px}
+.step::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:14px;height:14px;
+  border-radius:50%;background:var(--card);border:2px solid var(--line)}
+.step.on{color:var(--txt)}
+.step.on::before{border-color:var(--acc1);background:var(--acc1);box-shadow:0 0 12px rgba(139,92,246,.7)}
+.step.done{color:var(--ok)}
+.step.done::before{border-color:var(--ok);background:var(--ok)}
+.err{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35);border-radius:12px;
+  padding:16px 18px;margin-top:18px;font-size:14px;color:#fecaca}
+.err b{color:var(--bad)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0}
+.stat{background:#0d1119;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:6px}
+.stat .v{font-size:15px;font-weight:600}
+.pill{display:inline-block;font-size:12px;font-family:var(--mono);background:#0b0e15;border:1px solid var(--line);
+  border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;color:#c9d2e3}
+.pill.ok{border-color:rgba(52,211,153,.4);color:var(--ok)}
+.pill.warn{border-color:rgba(251,191,36,.4);color:var(--warn)}
+.pill.bad{border-color:rgba(248,113,113,.4);color:var(--bad)}
+.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin:26px 0 0;flex-wrap:wrap}
+.tab{background:none;border:0;color:var(--mut);font-size:14px;font-weight:600;padding:12px 16px;box-shadow:none;border-radius:0}
+.tab.on{color:var(--txt);border-bottom:2px solid var(--acc1);margin-bottom:-1px}
+pre{background:#07090e;border:1px solid var(--line);border-radius:0 0 12px 12px;padding:18px;overflow:auto;
+  max-height:480px;font:12.5px/1.65 var(--mono);color:#c9d2e3;white-space:pre-wrap;word-break:break-word;margin:0}
+.codebar{display:flex;justify-content:space-between;align-items:center;background:#0d1119;border:1px solid var(--line);
+  border-bottom:0;border-radius:12px 12px 0 0;padding:10px 14px;font-size:13px;color:var(--mut)}
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.check:last-child{border-bottom:0}
+.check input{margin-top:4px;accent-color:var(--acc1);width:16px;height:16px;flex-shrink:0}
+.check.done span{color:var(--dim);text-decoration:line-through}
+.check code{font-family:var(--mono);font-size:12.5px;background:#0b0e15;padding:1px 6px;border-radius:5px;color:#c9d2e3}
+ol.steps2{margin:8px 0;padding-left:22px;font-size:14.5px;color:#c9d2e3}
+ol.steps2 li{margin:10px 0}
+ol.steps2 code{font-family:var(--mono);font-size:13px;background:#0b0e15;padding:1px 7px;border-radius:5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.two{grid-template-columns:1fr}}
+.yesno{background:#0d1119;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:14px}
+.yesno h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+.yesno.yes h4{color:var(--ok)} .yesno.no h4{color:var(--warn)}
+.yesno ul{margin:6px 0;padding-left:20px;color:var(--mut)}
+.yesno code{font-family:var(--mono);font-size:12.5px;color:#c9d2e3}
+footer{margin:60px 0 40px;text-align:center;color:var(--dim);font-size:13px}
+footer a{color:var(--acc2);text-decoration:none}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2130;
+  border:1px solid var(--acc1);color:var(--txt);padding:10px 20px;border-radius:10px;font-size:14px;
+  opacity:0;transition:all .25s;pointer-events:none;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.sec-title{font-size:20px;font-weight:750;margin:34px 0 6px;letter-spacing:-.01em}
+.sec-sub{color:var(--mut);font-size:14px;margin:0 0 14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="badge">Lovable → Emergent migration helper</div>
+  <h1>Ship your Lovable app<br><span class="grad">into Emergent</span> in minutes</h1>
+  <p class="sub">Paste the GitHub repo Lovable synced your project to. Get a full inventory, a paste-ready import prompt for Emergent's agent, and a migration checklist.</p>
+</header>
+
+<main>
+<div class="card" id="inputCard">
+  <label for="repoUrl">Lovable-synced GitHub repository</label>
+  <input type="text" id="repoUrl" placeholder="https://github.com/you/your-lovable-app" autocomplete="off" spellcheck="false">
+  <details>
+    <summary>Private repo or hitting rate limits? Add a GitHub token (optional)</summary>
+    <div style="margin-top:10px">
+      <input type="password" id="ghToken" placeholder="ghp_… (only sent to api.github.com, never stored)" autocomplete="off">
+      <div class="hint">Create one at github.com → Settings → Developer settings → Personal access tokens. It stays in this page's memory and is never saved or sent anywhere except GitHub's API.</div>
+    </div>
+  </details>
+  <div class="row">
+    <button id="analyzeBtn" onclick="analyze()">Analyze repo</button>
+    <button class="ghost" onclick="downloadCLI()">Download CLI script <span style="font-weight:400;color:var(--dim)">for private repos &amp; full local runs</span></button>
+  </div>
+  <div class="hint">The repo Lovable creates via <b>Settings → Git → Connect GitHub</b>. Analysis runs entirely in your browser — your repo URL and token never leave this page except to call GitHub's public API.</div>
+</div>
+
+<div class="card" id="progressCard" hidden>
+  <div class="steps" id="stepper">
+    <div class="step" data-s="repo">Repo</div>
+    <div class="step" data-s="tree">File tree</div>
+    <div class="step" data-s="scan">Scanning code</div>
+    <div class="step" data-s="pack">Migration pack</div>
+  </div>
+  <div class="sec-sub" id="progressMsg" style="text-align:center">Starting…</div>
+</div>
+
+<div class="err" id="errBox" hidden></div>
+
+<div id="report" hidden>
+  <h2 class="sec-title" id="appTitle">Migration report</h2>
+  <p class="sec-sub" id="appSub"></p>
+  <div class="grid" id="statGrid"></div>
+  <div id="warnBox"></div>
+
+  <h2 class="sec-title">Your migration pack</h2>
+  <p class="sec-sub">Everything below is generated from <i>your</i> repo. Copy it, download it, then follow the Emergent steps.</p>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tabs">
+      <button class="tab on" data-t="prompt" onclick="showTab('prompt')">EMERGENT.md prompt</button>
+      <button class="tab" data-t="env" onclick="showTab('env')">.env.example</button>
+      <button class="tab" data-t="check" onclick="showTab('check')">Checklist</button>
+    </div>
+    <div id="tab-prompt">
+      <div class="codebar"><span>Paste this as your first message to Emergent's agent after pulling the repo</span>
+        <span><button class="ghost small" onclick="copyText('prompt')">Copy</button>
+        <button class="ghost small" onclick="download('EMERGENT.md',pack.prompt,'text/markdown')">Download</button></span></div>
+      <pre id="pre-prompt"></pre>
+    </div>
+    <div id="tab-env" hidden>
+      <div class="codebar"><span>Env var names found in code — fill in values in Emergent's secret store</span>
+        <span><button class="ghost small" onclick="copyText('env')">Copy</button>
+        <button class="ghost small" onclick="download('.env.example',pack.env,'text/plain')">Download</button></span></div>
+      <pre id="pre-env"></pre>
+    </div>
+    <div id="tab-check" hidden>
+      <div class="codebar"><span>Acceptance checklist — saved in this browser per repo</span>
+        <span><button class="ghost small" onclick="resetChecks()">Reset</button></span></div>
+      <div id="checklist" style="padding:8px 18px"></div>
+    </div>
+  </div>
+
+  <h2 class="sec-title">Import into Emergent</h2>
+  <div class="card">
+    <ol class="steps2" id="emergentSteps"></ol>
+  </div>
+</div>
+
+<h2 class="sec-title">For AI agents: MCP server</h2>
+<p class="sec-sub">The same analyzer as MCP tools — <code>analyze_repo</code> and <code>generate_migration_pack</code> — over stdio. Your agent inventories the repo and drafts the migration pack without you touching the UI.</p>
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="codebar"><span>Claude Code — add to <code>.mcp.json</code> (replace the path with where you save the files)</span>
+    <span><button class="ghost small" onclick="copyMCP()">Copy</button></span></div>
+  <pre id="pre-mcp"></pre>
+</div>
+<div class="row" style="margin-top:14px">
+  <button class="ghost small" onclick="downloadMCP('server')">Download server.js</button>
+  <button class="ghost small" onclick="downloadMCP('analyze')">Download analyze.js</button>
+</div>
+<p class="hint">Then run <code>npm install @modelcontextprotocol/sdk</code> in the same folder and <code>node server.js</code>. Pass a <code>github_token</code> per tool call (or set <code>GITHUB_TOKEN</code>) for private repos and higher rate limits. Full docs ship with the files.</p>
+
+<h2 class="sec-title">What travels, what doesn't</h2>
+<div class="two">
+  <div class="yesno yes"><h4>✓ Travels with the repo</h4>
+    <ul><li>All React source code &amp; <code>package.json</code></li>
+    <li><code>supabase/migrations/</code> — your schema &amp; RLS policies</li>
+    <li><code>supabase/functions/</code> — your edge functions</li>
+    <li>Public assets &amp; full git history</li></ul></div>
+  <div class="yesno no"><h4>✗ Stays behind</h4>
+    <ul><li>Database <b>rows</b> — exports contain zero data</li>
+    <li>Storage bucket <b>files</b> (uploads, images)</li>
+    <li><b>Secrets</b> — API keys must be re-entered in Emergent</li>
+    <li>Lovable's hosting, preview URLs &amp; analytics</li></ul></div>
+</div>
+<p class="hint" style="margin-top:14px">Backend call: Emergent's native stack is FastAPI + MongoDB, but your Lovable app speaks Supabase. The generated prompt keeps Supabase as the backend — the lowest-risk path — and tells Emergent's agent exactly how to re-wire it.</p>
+
+</main>
+<footer>
+  Built for the Lovable → Emergent migration path · Analysis runs 100% client-side ·
+  <a href="#" onclick="downloadCLI();return false;">CLI script</a> for private repos
+</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* Lovable -> Emergent Migrator — all client-side. Only calls api.github.com. */
+"use strict";
+const $ = id => document.getElementById(id);
+const pack = { prompt:"", env:"", repoKey:"" };
+let checks = {};
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function ghHeaders(){
+  const h = { "Accept":"application/vnd.github+json" };
+  const tok = $("ghToken").value.trim();
+  if (tok) h["Authorization"] = "Bearer " + tok;
+  return h;
+}
+async function gh(path){
+  const r = await fetch("https://api.github.com" + path, { headers: ghHeaders() });
+  if (r.status === 404) throw { user:"Repo not found. Check the URL — and if the repo is private, add a token with <b>repo</b> scope." };
+  if (r.status === 401) throw { user:"GitHub rejected the token (401). Check it has the right scope, or clear it and retry." };
+  if (r.status === 403 || r.status === 429) {
+    const reset = r.headers.get("x-ratelimit-reset");
+    const when = reset ? new Date(reset*1000).toLocaleTimeString() : "soon";
+    throw { user:`GitHub rate limit hit (60 req/hr without a token). Add a token above, or retry after ${when}.` };
+  }
+  if (!r.ok) throw { user:`GitHub API error ${r.status}. Try again in a moment.` };
+  return r.json();
+}
+function b64ToText(b64){
+  const bin = atob(b64.replace(/\s/g,""));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+function parseRepoUrl(u){
+  u = u.trim().replace(/\/+$/,"");
+  const m = u.match(/github\.com[/:]([^/]+)\/([^/#?]+?)(?:\.git)?(?:\/(?:tree|blob)\/([^/#?]+))?(?:[#?].*)?$/i);
+  if (!m) return null;
+  return { owner:m[1], repo:m[2], ref:m[3] || null };
+}
+function setStep(name, msg){
+  document.querySelectorAll("#stepper .step").forEach(el=>{
+    const order = ["repo","tree","scan","pack"];
+    const i = order.indexOf(el.dataset.s), c = order.indexOf(name);
+    el.classList.toggle("done", i < c);
+    el.classList.toggle("on", i === c);
+  });
+  if (msg) $("progressMsg").textContent = msg;
+}
+function esc(s){ return s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+const CHECKS = [
+  ["export","Lovable project synced to GitHub (<code>Settings → Git → Connect GitHub</code>) and repo is up to date"],
+  ["pack","Migration pack generated above (report reviewed, warnings cleared)"],
+  ["connect","GitHub connected in Emergent (profile icon → <code>Connect GitHub</code>)"],
+  ["pull","Repo pulled into a new Emergent task (<code>Pull from GitHub</code>, <code>emergent-import</code> branch)"],
+  ["prompt","<code>EMERGENT.md</code> prompt pasted as the first message to Emergent's agent"],
+  ["build","<code>npm install</code> + build succeed in Emergent with no behavior changes"],
+  ["backend","Backend re-wired: Supabase URL + keys in Emergent's secret store (or backend decision made)"],
+  ["auth","Auth flow works end to end (sign in / sign out)"],
+  ["data","Main data flow verified (list + write at least one record)"],
+  ["functions","Edge functions called by the UI respond (or are flagged as unportable)"],
+  ["secrets","No secret values committed anywhere; keys live only in Emergent's secret store"],
+  ["cutover","Lovable project kept alive until Emergent is confirmed as the source of truth"],
+];
+
+async function analyze(){
+  const parsed = parseRepoUrl($("repoUrl").value);
+  if (!parsed){ showErr("That doesn't look like a GitHub repo URL. Try <b>https://github.com/owner/repo</b>."); return; }
+  const { owner, repo } = parsed;
+  pack.repoKey = owner + "/" + repo;
+  $("errBox").hidden = true; $("report").hidden = true;
+  $("progressCard").hidden = false;
+  $("analyzeBtn").disabled = true;
+  try {
+    setStep("repo","Fetching repo metadata…");
+    const meta = await gh(`/repos/${owner}/${repo}`);
+    const branch = parsed.ref || meta.default_branch;
+    if (meta.private && !$("ghToken").value.trim())
+      throw { user:"This repo is <b>private</b>. Add a GitHub token with <b>repo</b> scope above, or use the CLI script." };
+
+    setStep("tree","Fetching file tree…");
+    const treeRes = await gh(`/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`);
+    if (treeRes.truncated) toast("Huge repo — file tree truncated by GitHub; scan is best-effort");
+    const files = (treeRes.tree || []).filter(t => t.type === "blob").map(t => t.path);
+    const has = p => files.some(f => f === p || f.startsWith(p + "/"));
+
+    setStep("scan","Reading package.json and scanning code…");
+    // package.json
+    let pkg = null, pkgRaw = "";
+    if (files.includes("package.json")) {
+      const c = await gh(`/repos/${owner}/${repo}/contents/package.json?ref=${encodeURIComponent(branch)}`);
+      pkgRaw = b64ToText(c.content || "");
+      try { pkg = JSON.parse(pkgRaw); } catch(e){}
+    }
+    const deps = pkg ? { ...pkg.dependencies, ...pkg.devDependencies } : {};
+    const depNames = Object.keys(deps);
+    const framework = deps.vite ? "Vite" : deps.next ? "Next.js" : deps.react ? "React" : (pkg ? "JS/TS" : "Unknown");
+    const keyDeps = ["react","vite","next","typescript","tailwindcss","@supabase/supabase-js","@tanstack/react-query"]
+      .filter(d => deps[d]).map(d => `${d}@${deps[d]}`);
+
+    // supabase inventory
+    const supaFiles = files.filter(f => f.startsWith("supabase/"));
+    const migrations = supaFiles.filter(f => f.startsWith("supabase/migrations/") && f.endsWith(".sql"));
+    const fnDirs = [...new Set(supaFiles.filter(f => f.startsWith("supabase/functions/"))
+      .map(f => f.split("/")[2]).filter(Boolean))];
+
+    // tracked .env files (not .env.example)
+    const envTracked = files.filter(f => /(^|\/)\.env(\.[A-Za-z0-9_-]+)?$/.test(f) && !f.endsWith(".env.example"));
+    const lovableArts = has(".lovable");
+
+    // code scan: env vars + secret patterns (bounded file set)
+    const textExt = /\.(tsx?|jsx?|mjs|cjs|html|json|css|vue|svelte)$/i;
+    const skip = /(^|\/)(node_modules|dist|build|\.git|\.next|coverage|vendor)\//;
+    const cands = files.filter(f => textExt.test(f) && !skip.test(f) && !/\.min\.js$/.test(f) && !/lock\.json$/.test(f) && !/-lock\.yaml$/.test(f));
+    // prioritize entry-ish files first
+    const prio = ["package.json","index.html","src/main.tsx","src/main.ts","src/App.tsx","src/index.tsx","vite.config.ts","next.config.js","next.config.mjs"];
+    cands.sort((a,b) => prio.indexOf(a) - prio.indexOf(b));
+    const scanSet = cands.filter(f => f !== "package.json").slice(0, 40);
+    const envVars = new Set(), secretHits = [];
+    const envRe = /import\.meta\.env\.(VITE_[A-Z0-9_]+)|process\.env\.([A-Z0-9_]+)/g;
+    const secRes = [/sb_secret_[A-Za-z0-9_-]{8,}/, /sk-(live|test)-[A-Za-z0-9]{8,}/, /ghp_[A-Za-z0-9]{20,}/,
+      /BEGIN [A-Z ]*PRIVATE KEY/, /xox[bap]-/, /["']api[_-]?key["']\s*[:=]/i];
+    let done = 0;
+    const batch = 5;
+    for (let i = 0; i < scanSet.length; i += batch) {
+      await Promise.all(scanSet.slice(i, i+batch).map(async f => {
+        try {
+          const c = await gh(`/repos/${owner}/${repo}/contents/${f}?ref=${encodeURIComponent(branch)}`);
+          if (c.size > 300000) return; // skip huge files
+          const text = b64ToText(c.content || "");
+          let m; envRe.lastIndex = 0;
+          while ((m = envRe.exec(text))) envVars.add(m[1] || m[2]);
+          if (secRes.some(rx => rx.test(text))) secretHits.push(f);
+        } catch(e){ /* unreadable file: skip */ }
+      }));
+      done = Math.min(i+batch, scanSet.length);
+      setStep("scan", `Scanning code… ${done}/${scanSet.length} files`);
+    }
+
+    setStep("pack","Generating your migration pack…");
+    const data = { owner, repo, branch, meta, pkg, deps, depNames, keyDeps, framework,
+      supaFiles, migrations, fnDirs, envTracked, lovableArts, envVars:[...envVars].sort(),
+      secretHits, scanned:scanSet.length };
+    renderReport(data);
+    $("report").hidden = false;
+    $("report").scrollIntoView({ behavior:"smooth", block:"start" });
+  } catch(e) {
+    showErr(e.user || "Something went wrong. Please try again.");
+  } finally {
+    $("progressCard").hidden = true;
+    $("analyzeBtn").disabled = false;
+  }
+}
+
+function showErr(html){
+  const b = $("errBox"); b.innerHTML = "<b>Couldn't analyze that repo.</b><br>" + html;
+  b.hidden = false; b.scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+function renderReport(d){
+  $("appTitle").textContent = d.pkg?.name || d.repo;
+  $("appSub").innerHTML = `${esc(d.owner)}/${esc(d.repo)} · branch <span class="pill">${esc(d.branch)}</span> · ` +
+    (d.meta.description ? esc(d.meta.description) : "No description") +
+    (d.meta.private ? ' · <span class="pill warn">private</span>' : "");
+  const hasSupa = d.supaFiles.length > 0;
+  const g = $("statGrid");
+  g.innerHTML = `
+    <div class="stat"><div class="k">Framework</div><div class="v">${esc(d.framework)}</div>
+      <div style="margin-top:8px">${d.keyDeps.map(k=>`<span class="pill">${esc(k)}</span>`).join("") || '<span class="pill">no key deps found</span>'}</div></div>
+    <div class="stat"><div class="k">Backend</div><div class="v">${hasSupa ? "Supabase" : "None detected"}</div>
+      <div style="margin-top:8px;font-size:13px;color:var(--mut)">${hasSupa
+        ? `${d.migrations.length} migration${d.migrations.length===1?"":"s"}${d.fnDirs.length?` · functions: ${d.fnDirs.map(esc).join(", ")}`:" · no edge functions"}`
+        : "frontend-only or external API"}</div></div>
+    <div class="stat"><div class="k">Env vars referenced</div><div class="v">${d.envVars.length}</div>
+      <div style="margin-top:8px">${d.envVars.slice(0,8).map(v=>`<span class="pill">${esc(v)}</span>`).join("")}${d.envVars.length>8?`<span class="pill">+${d.envVars.length-8} more</span>`:""}</div></div>
+    <div class="stat"><div class="k">Code scanned</div><div class="v">${d.scanned} files</div>
+      <div style="margin-top:8px;font-size:13px;color:var(--mut)">env names + secret patterns</div></div>`;
+
+  const warns = [];
+  if (d.envTracked.length) warns.push(["bad", `<b>${d.envTracked.length} tracked .env file${d.envTracked.length===1?"":"s"}</b> — ${d.envTracked.map(f=>`<span class="pill bad">${esc(f)}</span>`).join("")} — may contain real secrets. Clear before pushing anywhere.`]);
+  if (d.secretHits.length) warns.push(["bad", `Possible secret patterns in <b>${d.secretHits.length} file${d.secretHits.length===1?"":"s"}</b>: ${d.secretHits.slice(0,6).map(f=>`<span class="pill bad">${esc(f)}</span>`).join("")}${d.secretHits.length>6?"…":""} — review filenames before importing.`]);
+  if (d.lovableArts) warns.push(["warn", `<b>.lovable/</b> builder artifacts present — safe to drop before import (the CLI script removes them).`]);
+  if (!hasSupa) warns.push(["warn", `No <b>supabase/</b> directory — if the app has a backend, tell Emergent's agent where it lives; the prompt below covers this.`]);
+  if (!d.pkg) warns.push(["warn", `No <b>package.json</b> at repo root — is this the right repo? Emergent expects a JS/TS app.`]);
+  $("warnBox").innerHTML = warns.length
+    ? `<div class="err" style="margin:0 0 6px">${warns.map(w=>`<div style="margin:6px 0">${w[1]}</div>`).join("")}</div>` : "";
+
+  buildPack(d);
+  buildChecklist();
+  $("emergentSteps").innerHTML = `
+    <li>In Emergent: profile icon → <b>Connect GitHub</b> → authorize and grant access to <code>${esc(d.owner)}/${esc(d.repo)}</code>.</li>
+    <li>Start a new task → the <b>GitHub button</b> in chat → <b>Pull from GitHub</b> → select the repo and branch <code>${esc(d.branch)}</code>.</li>
+    <li>Paste the <b>EMERGENT.md prompt</b> from the Migration pack tab as your first message to the agent.</li>
+    <li>When it asks: hand over your Supabase URL + anon key (existing project = fastest), stored in Emergent's secret store — never pasted into chat as committed code.</li>
+    <li>Work the <b>Checklist</b> tab. Keep your Lovable project alive until Emergent is confirmed as the source of truth.</li>`;
+}
+
+function buildPack(d){
+  const hasSupa = d.supaFiles.length > 0;
+  const entry = d.framework === "Vite" ? "Entry: `src/main.tsx` → `index.html` (Vite + React)."
+    : d.framework === "Next.js" ? "Entry: Next.js app router (`app/`); `npm run dev` to start."
+    : "Entry: see package.json / README for the start command.";
+  const backend = hasSupa ? `## Backend decision (IMPORTANT)
+This app's backend is **Supabase** (migrations + edge functions live in \`supabase/\`).
+Keep Supabase as the backend — do not port it to Emergent's native stack unless I ask.
+
+1. Supabase schema: \`${d.migrations.length}\` migration file(s) in \`supabase/migrations/\`. These define the
+   tables and RLS policies — treat them as the source of truth for the data model.
+2. Edge functions: ${d.fnDirs.length ? d.fnDirs.join(", ") : "none"} in \`supabase/functions/\`.
+3. Ask me for: SUPABASE_URL and the anon key (and service-role key only if an edge
+   function needs it). Set them as environment variables in Emergent; the frontend reads
+   them from \`.env.example\`.
+4. Data does NOT travel with the repo (Lovable exports contain zero rows and no Storage
+   files). Ask me whether to point at the existing Supabase project or a fresh one; if
+   fresh, apply the migrations there first.`
+  : `## Backend decision (IMPORTANT)
+No \`supabase/\` directory was found in this repo, so the app is either frontend-only
+or its backend lives elsewhere (API calls, Lovable Cloud, or a third-party service).
+
+1. Scan the code for fetch/API clients and tell me what backend this app talks to.
+2. Do NOT invent a backend — ask me for the base URL and any required keys, and store
+   them in Emergent's env/secret store (never commit values).
+3. If the app truly needs a database and none exists, propose the smallest option
+   before building anything new.`;
+
+  pack.prompt =
+`# Import prompt for Emergent (paste this into the Emergent agent after pulling the repo)
+
+You are importing an existing app that was built in Lovable. Do NOT rebuild it from
+scratch — adapt this codebase to run in Emergent.
+
+## What this app is
+- Name: ${d.pkg?.name || d.repo}
+- Stack: ${d.keyDeps.join(", ") || "see package.json"}
+- Repo: ${d.owner}/${d.repo}, branch ${d.branch}
+- ${entry}
+
+${backend}
+
+## Steps
+1. Install dependencies and confirm the build succeeds. Fix dependency or toolchain
+   issues caused by environment differences; do not change app behavior to fix them.
+2. Wire the backend env vars (from above) and verify the app boots and its main data
+   flow works end to end.
+3. Then summarize: what runs, what env vars are required, and anything you could not
+   honor in Emergent's runtime.
+
+## Guardrails
+- Keep git history intact; commit your adaptations on a new branch.
+- Never commit real secret values — use Emergent's env/secret store.`;
+
+  pack.env = d.envVars.length
+    ? d.envVars.map(v => `${v}=`).join("\n") + "\n"
+    : "# No env vars were found referenced in the scanned code.\n# Add your backend keys here as NAME= (values stay in Emergent's secret store).\n";
+
+  $("pre-prompt").textContent = pack.prompt;
+  $("pre-env").textContent = pack.env;
+}
+
+function buildChecklist(){
+  const key = "migrator-checks:" + pack.repoKey;
+  try { checks = JSON.parse(localStorage.getItem(key) || "{}"); } catch(e){ checks = {}; }
+  const box = $("checklist");
+  box.innerHTML = CHECKS.map(([id, html]) =>
+    `<label class="check${checks[id]?" done":""}"><input type="checkbox" data-id="${id}" ${checks[id]?"checked":""}><span>${html}</span></label>`).join("");
+  box.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+    checks[inp.dataset.id] = inp.checked;
+    inp.closest(".check").classList.toggle("done", inp.checked);
+    try { localStorage.setItem(key, JSON.stringify(checks)); } catch(e){}
+    const total = CHECKS.length, n = Object.values(checks).filter(Boolean).length;
+    if (n === total) toast("Migration complete — nice work!");
+  }));
+}
+function resetChecks(){
+  checks = {};
+  try { localStorage.removeItem("migrator-checks:" + pack.repoKey); } catch(e){}
+  buildChecklist();
+}
+
+function showTab(t){
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.t === t));
+  ["prompt","env","check"].forEach(k => $("tab-"+k).hidden = (k !== t));
+}
+function copyText(which){
+  const txt = which === "prompt" ? pack.prompt : pack.env;
+  navigator.clipboard.writeText(txt).then(()=>toast("Copied to clipboard"), ()=>toast("Copy failed — select the text manually"));
+}
+function download(name, content, type){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast("Downloaded " + name);
+}
+async function downloadCLI(){
+  toast("Fetching CLI script…");
+  try {
+    const r = await fetch("migrate-to-emergent.sh");
+    if (!r.ok) throw 0;
+    download("migrate-to-emergent.sh", await r.text(), "text/x-sh");
+  } catch(e){ toast("Couldn't fetch the script — it's in the project folder"); }
+}
+const MCP_CONFIG = `{
+  "mcpServers": {
+    "lovable-emergent-migrator": {
+      "command": "node",
+      "args": ["/path/to/lovable-emergent-migrator/server.js"],
+      "env": { "GITHUB_TOKEN": "ghp_… (optional — private repos + higher rate limits)" }
+    }
+  }
+}`;
+const MCP_FILES = { server: "", analyze: "" };
+async function loadMCPFiles(){
+  try {
+    const [s, a] = await Promise.all([fetch("server.js").then(r=>r.text()), fetch("analyze.js").then(r=>r.text())]);
+    MCP_FILES.server = s; MCP_FILES.analyze = a;
+  } catch(e){ /* download buttons will toast on failure */ }
+}
+function downloadMCP(which){
+  const content = MCP_FILES[which], name = which === "server" ? "server.js" : "analyze.js";
+  if (!content) { toast("Files still loading — try again in a second"); return; }
+  download(name, content, "text/javascript");
+}
+function copyMCP(){
+  navigator.clipboard.writeText(MCP_CONFIG).then(()=>toast("MCP config copied — replace /path/to/…"), ()=>toast("Copy failed"));
+}
+$("pre-mcp").textContent = MCP_CONFIG;
+loadMCPFiles();
+$("repoUrl").addEventListener("keydown", e => { if (e.key === "Enter") analyze(); });
+
+</script>
+</body>
+</html>

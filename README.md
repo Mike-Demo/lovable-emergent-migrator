@@ -21,7 +21,7 @@ with minimal rebuild — starting from the GitHub repo Lovable synced your proje
 | 🌐 Web app | `web/index.html` · [live](https://lovable-emergent-migrator.space.fast/) | Public repos. 100% client-side: paste a URL, get the migration pack in-browser. |
 | 🛠 CLI script | `migrate-to-emergent.sh` | Private repos / full local runs. Clones, inventories, sanitizes (drops `.lovable/`, merges `.env.example`, scans for secrets), writes `EMERGENT.md`, pushes an `emergent-import` branch. |
 | 🤖 MCP server | `mcp/` | Agents. Tools `analyze_repo` + `generate_migration_pack` over stdio. See `mcp/README.md` for Claude Code / Codex config. |
-| 🧠 Skill | `skill/SKILL.md` | Agent playbook: the whole workflow, the backend decision, guardrails. |
+| 🧠 Skill | `skills/lovable-emergent-migrator/` | Agent playbook: the whole workflow, the backend decision, guardrails. Installable via `npx skills add Mike-Demo/lovable-emergent-migrator`. |
 
 ## Key facts (verified 2026-10-12)
 
@@ -32,6 +32,20 @@ with minimal rebuild — starting from the GitHub repo Lovable synced your proje
   Emergent's agent exactly how to re-wire it.
 - Import is UI-only: there is no Emergent import API or deep link, so the script automates
   everything up to the click.
+
+## Install the skill
+
+```bash
+npx skills add Mike-Demo/lovable-emergent-migrator
+```
+
+Or clone and run the bundled installer:
+
+```bash
+git clone https://github.com/Mike-Demo/lovable-emergent-migrator.git
+cd lovable-emergent-migrator/skills/lovable-emergent-migrator
+./install.sh
+```
 
 ## Quickstart (CLI)
 

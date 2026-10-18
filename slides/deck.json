@@ -1,0 +1,186 @@
+{
+  "boltSlidesVersion": 1,
+  "boltSlidesId": "11011050-f9d6-4d43-8a9e-3e43af51bbaf",
+  "deck": {
+    "title": "Lovable → Emergent Migrator",
+    "transition": "fade",
+    "font": "space",
+    "accent": "#8B5CF6"
+  },
+  "slides": [
+    {
+      "id": "s1",
+      "position": 0,
+      "layout": "cover",
+      "props": {
+        "kicker": "Open-source toolkit · Mike-Demo",
+        "title": "Lovable → **Emergent** Migrator",
+        "subtitle": "Change builders without starting over.",
+        "foot": "github.com/Mike-Demo/lovable-emergent-migrator"
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "Introduce the project in one line: it moves Lovable-built apps into Emergent without a rewrite. Everything else in the deck explains how.",
+      "status": "none"
+    },
+    {
+      "id": "s2",
+      "position": 1,
+      "layout": "statement",
+      "props": {
+        "kicker": "The problem",
+        "title": "Easy to start. ==Hard to leave.==",
+        "body": "AI app builders are great at getting to v1 — but when a project outgrows its builder, the code, structure, and platform assumptions are tangled together. A manual move means days of untangling before Emergent can even open the project."
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "Empathize with the pain: nobody plans to leave, but growth forces it. The cost isn't the new platform — it's untangling the old one.",
+      "status": "none"
+    },
+    {
+      "id": "s3",
+      "position": 2,
+      "layout": "pillars",
+      "props": {
+        "title": "A three-part toolkit for a ==clean import==.",
+        "items": [
+          {
+            "title": "Analyze",
+            "body": "See exactly what your Lovable project contains — and what needs attention before a move."
+          },
+          {
+            "title": "Prep",
+            "body": "Restructure the repo so it matches what Emergent expects, not what Lovable left behind."
+          },
+          {
+            "title": "Hand off",
+            "body": "Give Emergent a project it can actually work with from the first prompt."
+          }
+        ]
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "The mental model in three verbs: analyze, prep, hand off. Each maps to a concrete tool on the next slide.",
+      "status": "none"
+    },
+    {
+      "id": "s4",
+      "position": 3,
+      "layout": "bento",
+      "props": {
+        "kicker": "The tools",
+        "title": "Three tools, one job.",
+        "tiles": [
+          {
+            "k": "01",
+            "title": "Web analyzer",
+            "body": "Inspects a Lovable project and reports what needs attention before you move — structure, dependencies, surprises."
+          },
+          {
+            "k": "02",
+            "title": "CLI prep script",
+            "body": "Restructures the repository for import, so the move is a command — not a week of file surgery."
+          },
+          {
+            "k": "03",
+            "title": "MCP server",
+            "body": "Lets an AI agent drive the migration steps directly — the same protocol Emergent's agents already speak.",
+            "variant": "accent"
+          }
+        ]
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "One tool per job: analyze in the browser, prep on the command line, automate through MCP. The MCP server is the differentiator — an agent does the driving.",
+      "status": "none"
+    },
+    {
+      "id": "s5",
+      "position": 4,
+      "layout": "steps",
+      "props": {
+        "kicker": "How it works",
+        "title": "Four steps to a new home.",
+        "items": [
+          { "title": "Analyze", "body": "Scan the Lovable project and review the report." },
+          { "title": "Prep", "body": "Run the CLI to restructure the repo for import." },
+          { "title": "Import", "body": "Bring the prepped project into Emergent." },
+          { "title": "Verify", "body": "Confirm the app runs clean in its new home." }
+        ]
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "Walk the arc end to end. Emphasize that verify closes the loop — you're not importing on faith.",
+      "status": "none"
+    },
+    {
+      "id": "s6",
+      "position": 5,
+      "layout": "statGrid",
+      "props": {
+        "kicker": "Key features",
+        "title": "Built for a move you can trust.",
+        "stats": [
+          { "value": "3", "label": "Complementary tools", "caption": "Analyzer, CLI, and MCP server covering the full move" },
+          { "value": "4", "label": "Step pipeline", "caption": "Analyze → prep → import → verify, repeatable end to end" },
+          { "value": "0", "label": "Rewrites required", "caption": "Your existing code moves with you — no starting over" }
+        ]
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "Summarize the value: full coverage of the move, a repeatable pipeline, and zero rewrite cost. Pause on the zero.",
+      "status": "none"
+    },
+    {
+      "id": "s7",
+      "position": 6,
+      "layout": "bigNumber",
+      "props": {
+        "kicker": "Status",
+        "value": "100%",
+        "caption": "open source and working today — clone it, run it, ship your migration",
+        "foot": "github.com/Mike-Demo/lovable-emergent-migrator"
+      },
+      "background": { "type": "color", "color": "var(--bg)" },
+      "animation": "cascade",
+      "transition": null,
+      "nav": null,
+      "notes": "This is live, not a roadmap item. The whole toolkit is public — nothing to sign up for, nothing to wait for.",
+      "status": "none"
+    },
+    {
+      "id": "s8",
+      "position": 7,
+      "layout": "cover",
+      "props": {
+        "kicker": "Start your migration",
+        "title": "Change builders. ==Keep your app.==",
+        "subtitle": "The Lovable → Emergent Migrator is open source and ready to run.",
+        "foot": "github.com/Mike-Demo/lovable-emergent-migrator"
+      },
+      "background": {
+        "type": "gradient",
+        "from": "#06080d",
+        "to": "#14102a",
+        "angle": 160
+      },
+      "animation": "cascade",
+      "transition": "zoom",
+      "nav": null,
+      "notes": "Close with the call to action: the repo link is on screen. Anyone with a Lovable project can run the first analysis today.",
+      "status": "none"
+    }
+  ]
+}
